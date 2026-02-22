@@ -3,32 +3,31 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from SafoneAPI import SafoneAPI
 
-# ===== Logging =====
+# Logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# ===== Initialize SafoneAPI =====
+# Initialize API
 api = SafoneAPI()
 
-# ===== /start Command =====
+# /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Hi! I'm your AI assistant powered by SafoneAPI.\nSend me any message."
     )
 
-# ===== Handle Messages =====
+# Handle messages
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     logger.info(f"User: {user_message}")
 
     try:
-        # chatbot() is async in your version
+        # Use chatbot() (async)
         response = await api.chatbot(user_message)
 
-        # SafoneAPI returns dict with "response"
         if isinstance(response, dict) and response.get("success"):
             reply = response.get("response")
         else:
@@ -40,7 +39,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"ERROR: {e}")
         await update.message.reply_text("AI error occurred.")
 
-# ===== Main =====
 def main():
     application = Application.builder().token(
         "8287015753:AAGoGYF_u6-OqfrqGF1_xPY8yIW5FiD9MtE"
