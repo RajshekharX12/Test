@@ -11,49 +11,40 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Direct Safone API call
 async def get_ai_response(prompt: str) -> str:
-    url = "http://api.safone.vip/chatbot"
+    url = "https://api.safone.vip/chatbot"
 
     params = {
-        "query": prompt,
-        "user_id": "telegram_user"
+        "query": prompt
     }
 
     async with httpx.AsyncClient(timeout=20) as client:
         response = await client.get(url, params=params)
+
+    print("STATUS:", response.status_code)
+    print("RAW:", response.text)
 
     data = response.json()
 
     if data.get("success"):
         return data.get("response")
     else:
-        return "AI failed to respond."
+        return str(data)
 
-# /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Hi! I'm your AI assistant powered by Safone API."
-    )
+    await update.message.reply_text("Safone Direct API Mode")
 
-# Handle messages
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_message = update.message.text
-    logger.info(f"User: {user_message}")
-
     try:
-        reply = await get_ai_response(user_message)
+        reply = await get_ai_response(update.message.text)
         await update.message.reply_text(reply)
     except Exception as e:
-        logger.error(e)
-        await update.message.reply_text("AI error occurred.")
+        await update.message.reply_text(str(e))
 
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
     app.run_polling()
 
 if __name__ == "__main__":
