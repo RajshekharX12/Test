@@ -1,44 +1,38 @@
 import logging
+import httpx
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-from SafoneAPI import SafoneAPI
 
-# ===== CONFIG =====
 BOT_TOKEN = "8287015753:AAGoGYF_u6-OqfrqGF1_xPY8yIW5FiD9MtE"
 
-# ===== Logging =====
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO
-)
+# Local API (same VPS)
+API_URL = "http://127.0.0.1:5500"
+
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ===== Initialize SafoneAPI =====
-api = SafoneAPI()
-
-# ===== /start Command =====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("ChatGPT mode activated.")
+    await update.message.reply_text("GPT4 Web API Bot Ready.")
 
-# ===== Handle Messages =====
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
-    logger.info(f"User: {user_message}")
 
     try:
-        # Correct Safone ChatGPT call
-        resp = await api.chatgpt(user_message)
+        async with httpx.AsyncClient(timeout=60) as client:
+            response = await client.get(API_URL, params={"text": user_message})
 
-        # Safely extract response
-        reply = resp.response if hasattr(resp, "response") else str(resp)
+        reply = response.text.strip()
+
+        # Telegram max message length safety
+        if len(reply) > 4000:
+            reply = reply[:4000]
 
         await update.message.reply_text(reply)
 
     except Exception as e:
-        logger.error(f"ERROR: {e}")
-        await update.message.reply_text("AI error occurred.")
+        logger.error(f"API ERROR: {e}")
+        await update.message.reply_text("AI server error.")
 
-# ===== Main =====
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
