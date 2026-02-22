@@ -3,33 +3,44 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from SafoneAPI import SafoneAPI
 
-# Enable logging
+# Logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# Initialize SafoneAPI client (synchronous)
+# Initialize SafoneAPI
 api = SafoneAPI()
 
-# /start command
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+# Start command
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Hi! I'm your AI assistant powered by SafoneAPI.\n"
-        "Send me any message and I'll reply using AI."
+        "Send me any message."
     )
 
-# Handle incoming messages
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+# Message handler
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     logger.info(f"User: {user_message}")
 
     try:
-        # SafoneAPI is synchronous — DO NOT use await
-        response = api.gpt(user_message)   # If error, change to api.chat(user_message)
+        # Try different possible SafoneAPI methods safely
+        if hasattr(api, "ask"):
+            response = api.ask(user_message)
+        elif hasattr(api, "gpt"):
+            response = api.gpt(user_message)
+        elif hasattr(api, "chat"):
+            response = api.chat(user_message)
+        elif hasattr(api, "ai"):
+            response = api.ai(user_message)
+        else:
+            raise Exception("No valid AI method found in SafoneAPI")
 
-        # Extract reply safely
+        logger.info(f"RAW RESPONSE: {response}")
+
+        # Extract text safely
         if isinstance(response, dict):
             reply = response.get("message") or response.get("text") or str(response)
         else:
@@ -38,10 +49,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(reply)
 
     except Exception as e:
-        logger.error(f"Error: {e}")
-        await update.message.reply_text("Sorry, AI is currently unavailable.")
+        logger.error(f"ERROR: {e}")
+        await update.message.reply_text(f"Error: {e}")
 
-def main() -> None:
+def main():
     application = Application.builder().token(
         "8287015753:AAGoGYF_u6-OqfrqGF1_xPY8yIW5FiD9MtE"
     ).build()
