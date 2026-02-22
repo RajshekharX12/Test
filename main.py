@@ -13,34 +13,22 @@ logger = logging.getLogger(__name__)
 # Initialize SafoneAPI
 api = SafoneAPI()
 
-# Start command
+# /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Hi! I'm your AI assistant powered by SafoneAPI.\n"
         "Send me any message."
     )
 
-# Message handler
+# Handle messages
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     logger.info(f"User: {user_message}")
 
     try:
-        # Try different possible SafoneAPI methods safely
-        if hasattr(api, "ask"):
-            response = api.ask(user_message)
-        elif hasattr(api, "gpt"):
-            response = api.gpt(user_message)
-        elif hasattr(api, "chat"):
-            response = api.chat(user_message)
-        elif hasattr(api, "ai"):
-            response = api.ai(user_message)
-        else:
-            raise Exception("No valid AI method found in SafoneAPI")
+        # CORRECT method for your version
+        response = api.chatgpt(user_message)
 
-        logger.info(f"RAW RESPONSE: {response}")
-
-        # Extract text safely
         if isinstance(response, dict):
             reply = response.get("message") or response.get("text") or str(response)
         else:
