@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from SafoneAPI import SafoneAPI
 
-# Logging
+# Enable logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO
@@ -26,9 +26,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"User: {user_message}")
 
     try:
-        # CORRECT method for your version
-        response = api.chatgpt(user_message)
+        # chatgpt is async in your version → must await
+        response = await api.chatgpt(user_message)
 
+        # Extract reply safely
         if isinstance(response, dict):
             reply = response.get("message") or response.get("text") or str(response)
         else:
